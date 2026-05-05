@@ -1,0 +1,118 @@
+# ──────────────────────────────────────────────
+# .NET / C# Build Outputs
+# ──────────────────────────────────────────────
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+# ──────────────────────────────────────────────
+# NuGet Packages
+# ──────────────────────────────────────────────
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ──────────────────────────────────────────────
+# Visual Studio / VS Code
+# ──────────────────────────────────────────────
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.rsuser
+[Tt]humbs.db
+*.pidb
+*.svclog
+*.scc
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+.idea/
+
+# ──────────────────────────────────────────────
+# User-specific / Environment files
+# ──────────────────────────────────────────────
+*.env
+.env.*
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Staging.json
+appsettings.Local.json
+launchSettings.json
+Properties/launchSettings.json
+**/Properties/launchSettings.json
+
+# ──────────────────────────────────────────────
+# Secrets & Certificates
+# ──────────────────────────────────────────────
+*.pfx
+*.p12
+*.key
+*.pem
+*.cert
+secrets.json
+usersecrets/
+
+# ──────────────────────────────────────────────
+# OS Generated Files
+# ──────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ──────────────────────────────────────────────
+# Docker
+# ──────────────────────────────────────────────
+docker-compose.override.yml
+
+# ──────────────────────────────────────────────
+# Entity Framework Migrations (optional - uncomment if you DON'T want to track migrations)
+# ──────────────────────────────────────────────
+# **/Migrations/
+
+# ──────────────────────────────────────────────
+# Test Results
+# ──────────────────────────────────────────────
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# ──────────────────────────────────────────────
+# Misc
+# ──────────────────────────────────────────────
+*.cache
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+*.orig
+
+# ──────────────────────────────────────────────
+# .http files (API test files - not needed in repo)
+# ──────────────────────────────────────────────
+*.http

@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  # ──────────────────────────────────────────────
+  # SQL Server Database
+  # ──────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cod-sqlserver
+    environment:
+      SA_PASSWORD: "CodMicro@2024!"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - cod-network
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "CodMicro@2024!" -Q "SELECT 1" -C -b
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  # Product Service (Port 5001)
+  # ──────────────────────────────────────────────
+  product-service:
+    build:
+      context: ./src/ProductService
+      dockerfile: Dockerfile
+    container_name: cod-product-service
+    ports:
+      - "5001:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=ProductDb;User Id=sa;Password=CodMicro@2024!;TrustServerCertificate=True;
+      - Jwt__Key=CODMicroservicesSecretKey2024!@#$%^&*
+      - Jwt__Issuer=CODMicroservices
+      - Jwt__Audience=CODMicroservicesClient
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - cod-network
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────
+  # Employee Service (Port 5002)
+  # ──────────────────────────────────────────────
+  employee-service:
+    build:
+      context: ./src/EmployeeService
+      dockerfile: Dockerfile
+    container_name: cod-employee-service
+    ports:
+      - "5002:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=EmployeeDb;User Id=sa;Password=CodMicro@2024!;TrustServerCertificate=True;
+      - Jwt__Key=CODMicroservicesSecretKey2024!@#$%^&*
+      - Jwt__Issuer=CODMicroservices
+      - Jwt__Audience=CODMicroservicesClient
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - cod-network
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────
+  # Order Service (Port 5003)
+  # ──────────────────────────────────────────────
+  order-service:
+    build:
+      context: ./src/OrderService
+      dockerfile: Dockerfile
+    container_name: cod-order-service
+    ports:
+      - "5003:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=OrderDb;User Id=sa;Password=CodMicro@2024!;TrustServerCertificate=True;
+      - Jwt__Key=CODMicroservicesSecretKey2024!@#$%^&*
+      - Jwt__Issuer=CODMicroservices
+      - Jwt__Audience=CODMicroservicesClient
+      - ServiceUrls__ProductService=http://product-service:80
+      - ServiceUrls__EmployeeService=http://employee-service:80
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      product-service:
+        condition: service_started
+      employee-service:
+        condition: service_started
+    networks:
+      - cod-network
+    restart: unless-stopped
+
+volumes:
+  sqlserver-data:
+
+networks:
+  cod-network:
+    driver: bridge
