@@ -11,6 +11,7 @@ RUN dotnet publish -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENV ASPNETCORE_URLS=http://+:80
+# Render uses PORT env variable
+ENV ASPNETCORE_URLS=http://+:${PORT:-80}
 EXPOSE 80
 ENTRYPOINT ["dotnet", "ProductService.dll"]

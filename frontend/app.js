@@ -1,5 +1,8 @@
 // ═══════════ CONFIG ═══════════
-const API = {
+// To connect to deployed backend, update these URLs:
+// For local dev: leave as localhost
+// For Render: replace with your Render service URLs
+const API = window.API_CONFIG || {
   product: 'http://localhost:5001',
   employee: 'http://localhost:5002',
   order: 'http://localhost:5003'

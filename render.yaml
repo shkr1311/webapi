@@ -1,0 +1,70 @@
+# Render Blueprint — deploy all 3 services at once
+# https://render.com/docs/blueprint-spec
+
+services:
+  # ──────────────────────────────────────────────
+  # Product Service
+  # ──────────────────────────────────────────────
+  - type: web
+    name: cod-product-service
+    runtime: docker
+    dockerfilePath: ./src/ProductService/Dockerfile
+    dockerContext: ./src/ProductService
+    plan: free
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Jwt__Key
+        value: CODMicroservicesSecretKey2024!@#$%^&*
+      - key: Jwt__Issuer
+        value: CODMicroservices
+      - key: Jwt__Audience
+        value: CODMicroservicesClient
+
+  # ──────────────────────────────────────────────
+  # Employee Service
+  # ──────────────────────────────────────────────
+  - type: web
+    name: cod-employee-service
+    runtime: docker
+    dockerfilePath: ./src/EmployeeService/Dockerfile
+    dockerContext: ./src/EmployeeService
+    plan: free
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Jwt__Key
+        value: CODMicroservicesSecretKey2024!@#$%^&*
+      - key: Jwt__Issuer
+        value: CODMicroservices
+      - key: Jwt__Audience
+        value: CODMicroservicesClient
+
+  # ──────────────────────────────────────────────
+  # Order Service
+  # ──────────────────────────────────────────────
+  - type: web
+    name: cod-order-service
+    runtime: docker
+    dockerfilePath: ./src/OrderService/Dockerfile
+    dockerContext: ./src/OrderService
+    plan: free
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Jwt__Key
+        value: CODMicroservicesSecretKey2024!@#$%^&*
+      - key: Jwt__Issuer
+        value: CODMicroservices
+      - key: Jwt__Audience
+        value: CODMicroservicesClient
+      - key: ServiceUrls__ProductService
+        fromService:
+          name: cod-product-service
+          type: web
+          property: host
+      - key: ServiceUrls__EmployeeService
+        fromService:
+          name: cod-employee-service
+          type: web
+          property: host
