@@ -82,8 +82,12 @@ async function loadDashboard() {
 async function loadProducts() {
   const data = await api(API.product, '/api/products');
   document.getElementById('products-table').innerHTML = (data.data || []).map(p => `
-    <tr><td>#${p.id}</td><td>${p.name}</td><td>$${p.price.toFixed(2)}</td><td>${p.stock}</td><td>${fmt(p.createdAt)}</td></tr>
-  `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No products</td></tr>';
+    <tr><td>#${p.id}</td><td>${p.name}</td><td>$${p.price.toFixed(2)}</td><td>${p.stock}</td><td>${fmt(p.createdAt)}</td>
+    <td><div class="action-btns">
+      <button class="btn btn-sm btn-edit" onclick="editProduct(${p.id},'${p.name.replace(/'/g,"\\'")}',${p.price},${p.stock})">✏️ Edit</button>
+      <button class="btn btn-sm btn-del" onclick="deleteProduct(${p.id},'${p.name.replace(/'/g,"\\'")}')">🗑️ Del</button>
+    </div></td></tr>
+  `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No products</td></tr>';
 }
 
 async function createProduct() {
@@ -97,6 +101,24 @@ async function createProduct() {
   else toast(data.message || 'Failed', 'error');
 }
 
+function editProduct(id, name, price, stock) {
+  document.getElementById('modal-title').textContent = `Edit Product #${id}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-group"><label>Product Name</label><input id="edit-p-name" value="${name}"></div>
+    <div class="form-group"><label>Price ($)</label><input id="edit-p-price" type="number" step="0.01" value="${price}"></div>
+    <div class="form-group"><label>Stock</label><input id="edit-p-stock" type="number" value="${stock}"></div>`;
+  currentEdit = { type: 'product', id };
+  document.getElementById('editModal').style.display = 'flex';
+}
+
+async function deleteProduct(id, name) {
+  if (!confirm(`Delete product "${name}"?`)) return;
+  if (!token) await getToken();
+  const res = await fetch(`${API.product}/api/products/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+  if (res.ok) { toast(`Product "${name}" deleted`, 'success'); loadProducts(); }
+  else toast('Delete failed', 'error');
+}
+
 // ═══════════ EMPLOYEES ═══════════
 async function loadEmployees() {
   const data = await api(API.employee, '/api/employees');
@@ -104,7 +126,11 @@ async function loadEmployees() {
     <tr>
       <td>#${e.id}</td><td>${e.name}</td><td>${e.phone}</td>
       <td>${e.isAvailable ? statusPill('Available') : statusPill('Busy')}</td>
-      <td><button class="btn btn-sm ${e.isAvailable ? 'btn-warning' : 'btn-success'}" onclick="toggleAvail(${e.id}, ${!e.isAvailable})">${e.isAvailable ? 'Mark Busy' : 'Mark Free'}</button></td>
+      <td><div class="action-btns">
+        <button class="btn btn-sm ${e.isAvailable ? 'btn-warning' : 'btn-success'}" onclick="toggleAvail(${e.id}, ${!e.isAvailable})">${e.isAvailable ? 'Busy' : 'Free'}</button>
+        <button class="btn btn-sm btn-edit" onclick="editEmployee(${e.id},'${e.name.replace(/'/g,"\\'")}','${e.phone.replace(/'/g,"\\'")}')">✏️</button>
+        <button class="btn btn-sm btn-del" onclick="deleteEmployee(${e.id},'${e.name.replace(/'/g,"\\'")}')">🗑️</button>
+      </div></td>
     </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No employees</td></tr>';
 }
 
@@ -122,6 +148,23 @@ async function toggleAvail(id, isAvailable) {
   await api(API.employee, `/api/employees/${id}/availability`, 'PUT', { isAvailable });
   toast(`Employee ${isAvailable ? 'available' : 'busy'}`, 'info');
   loadEmployees();
+}
+
+function editEmployee(id, name, phone) {
+  document.getElementById('modal-title').textContent = `Edit Employee #${id}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-group"><label>Employee Name</label><input id="edit-e-name" value="${name}"></div>
+    <div class="form-group"><label>Phone</label><input id="edit-e-phone" value="${phone}"></div>`;
+  currentEdit = { type: 'employee', id };
+  document.getElementById('editModal').style.display = 'flex';
+}
+
+async function deleteEmployee(id, name) {
+  if (!confirm(`Delete employee "${name}"?`)) return;
+  if (!token) await getToken();
+  const res = await fetch(`${API.employee}/api/employees/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+  if (res.ok) { toast(`Employee "${name}" deleted`, 'success'); loadEmployees(); }
+  else toast('Delete failed', 'error');
 }
 
 // ═══════════ ORDERS ═══════════
@@ -254,6 +297,45 @@ async function runCodFlow() {
 
   btn.disabled = false; btn.textContent = '▶️ Run Complete COD Flow';
 }
+
+// ═══════════ MODAL ═══════════
+let currentEdit = null;
+
+function closeModal() {
+  document.getElementById('editModal').style.display = 'none';
+  currentEdit = null;
+}
+
+async function saveEdit() {
+  if (!currentEdit) return;
+  if (!token) await getToken();
+
+  if (currentEdit.type === 'product') {
+    const name = document.getElementById('edit-p-name').value;
+    const price = parseFloat(document.getElementById('edit-p-price').value);
+    const stock = parseInt(document.getElementById('edit-p-stock').value);
+    if (!name || !price) { toast('Fill all fields', 'error'); return; }
+    const data = await api(API.product, `/api/products/${currentEdit.id}`, 'PUT', { name, price, stock });
+    if (data.success) { toast(`Product updated!`, 'success'); loadProducts(); }
+    else toast(data.message || 'Update failed', 'error');
+  }
+
+  if (currentEdit.type === 'employee') {
+    const name = document.getElementById('edit-e-name').value;
+    const phone = document.getElementById('edit-e-phone').value;
+    if (!name || !phone) { toast('Fill all fields', 'error'); return; }
+    const data = await api(API.employee, `/api/employees/${currentEdit.id}`, 'PUT', { name, phone });
+    if (data.success) { toast(`Employee updated!`, 'success'); loadEmployees(); }
+    else toast(data.message || 'Update failed', 'error');
+  }
+
+  closeModal();
+}
+
+// Close modal on overlay click
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal-overlay')) closeModal();
+});
 
 // ═══════════ INIT ═══════════
 checkHealth(); setInterval(checkHealth, 10000);
